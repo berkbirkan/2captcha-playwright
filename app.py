@@ -39,7 +39,7 @@ def set_using_cdp(api_key, browser):
             if (serviceWorkerLink) serviceWorkerLink.click();
         }"""
     )
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(5000)
     
     extension_page = browser.new_page()
     extension_page.goto(f"chrome-extension://{extension_id}/options/options.html")
@@ -74,6 +74,7 @@ def solve_captcha(api_key):
 
         #Method 2 - For Set 2CAPTCHA API Key
         set_using_cdp(api_key, browser)
+
         
         page = browser.new_page()
         page.goto("https://www.google.com/recaptcha/api2/demo")
