@@ -128,4 +128,4 @@ def solve_endpoint():
 # Ana işlemde, artık komut satırı argümanı yerine direkt Flask sunucusunu başlatıyoruz.
 if __name__ == '__main__':
     # Flask uygulamasını 0.0.0.0:5000 üzerinde başlatıyoruz.
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5031, debug=True)
