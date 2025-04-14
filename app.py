@@ -86,11 +86,13 @@ def solve_captcha(api_key):
         before_filename = f"before_{random_string(8)}.png"
         before_path = os.path.join("images", before_filename)
         page.wait_for_timeout(5000)
-        time.sleep(5)
+        
         page.screenshot(path=before_path)
         
         # Örnek olarak bekleme süresi, gerçek işlemde tıklama vs. eklenebilir.
         page.wait_for_timeout(5000)
+
+        time.sleep(10)
         
         # Ekran görüntüsü sonrası
         after_filename = f"after_{random_string(8)}.png"
