@@ -57,7 +57,7 @@ def set_using_cdp(api_key, browser):
 def solve_captcha(api_key):
     extension_path = os.path.abspath("./2captcha-solver")
     #Method 1
-    #modify_config_js(api_key, extension_path)
+    modify_config_js(api_key, extension_path)
     
     temp_user_data = f"/tmp/{uuid.uuid4()}"
     
