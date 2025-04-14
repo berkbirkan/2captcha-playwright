@@ -43,6 +43,8 @@ def set_using_cdp(api_key, browser):
     
     extension_page = browser.new_page()
     extension_page.goto(f"chrome-extension://{extension_id}/options/options.html")
+
+    page.wait_for_timeout(5000)
     
     extension_page.evaluate(
         f"""() => {{
