@@ -76,7 +76,7 @@ def solve_captcha(api_key):
         )
 
         #Method 2 - For Set 2CAPTCHA API Key
-        set_using_cdp(api_key, browser)
+        #set_using_cdp(api_key, browser)
 
         time.sleep(5)
         page = browser.new_page()
@@ -86,6 +86,7 @@ def solve_captcha(api_key):
         before_filename = f"before_{random_string(8)}.png"
         before_path = os.path.join("images", before_filename)
         page.wait_for_timeout(5000)
+        time.sleep(5)
         page.screenshot(path=before_path)
         
         # Örnek olarak bekleme süresi, gerçek işlemde tıklama vs. eklenebilir.
