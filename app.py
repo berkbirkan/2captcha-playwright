@@ -92,7 +92,7 @@ def solve_captcha(api_key):
         # Örnek olarak bekleme süresi, gerçek işlemde tıklama vs. eklenebilir.
         page.wait_for_timeout(5000)
 
-        time.sleep(10)
+        time.sleep(200)
         
         # Ekran görüntüsü sonrası
         after_filename = f"after_{random_string(8)}.png"
