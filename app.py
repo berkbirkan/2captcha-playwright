@@ -11,8 +11,9 @@ from playwright.sync_api import sync_playwright
 
 app = Flask(__name__, static_folder='images')
 
-
+#Method 1 - For Set 2CAPTCHA API Key
 def modify_config_js(api_key, extension_path):
+    
     config_file_path = os.path.join(extension_path, 'common', 'config.js')
     base_config = open(config_file_path).read()
     api_key_pattern = re.compile(r'(\bapiKey: )(null|".*?"),')
@@ -20,7 +21,7 @@ def modify_config_js(api_key, extension_path):
     with open(config_file_path, 'w+') as f:
         f.write(updated_config)
 
-
+#Method 2 - For Set 2CAPTCHA API Key
 def set_using_cdp(api_key, browser):
     page = browser.new_page()
     page.goto("chrome://extensions/")
@@ -52,7 +53,8 @@ def set_using_cdp(api_key, browser):
 
 def solve_captcha(api_key):
     extension_path = os.path.abspath("./2captcha-solver")
-    modify_config_js(api_key, extension_path)
+    #Method 1
+    #modify_config_js(api_key, extension_path)
     
     temp_user_data = f"/tmp/{uuid.uuid4()}"
     
@@ -69,7 +71,8 @@ def solve_captcha(api_key):
                 "--disable-dev-shm-usage"
             ]
         )
-        
+
+        #Method 2 - For Set 2CAPTCHA API Key
         set_using_cdp(api_key, browser)
         
         page = browser.new_page()
