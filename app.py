@@ -78,7 +78,7 @@ def solve_captcha(api_key):
         # Ekran görüntüsü öncesi
         before_filename = f"before_{random_string(8)}.png"
         before_path = os.path.join("images", before_filename)
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(5000)
         page.screenshot(path=before_path)
         
         # Örnek olarak bekleme süresi, gerçek işlemde tıklama vs. eklenebilir.
