@@ -5,6 +5,7 @@ import uuid
 import random
 import string
 import traceback
+import time
 
 from flask import Flask, request, jsonify, send_from_directory, url_for
 from playwright.sync_api import sync_playwright
@@ -77,7 +78,7 @@ def solve_captcha(api_key):
         #Method 2 - For Set 2CAPTCHA API Key
         set_using_cdp(api_key, browser)
 
-        
+        time.sleep(5)
         page = browser.new_page()
         page.goto("https://www.google.com/recaptcha/api2/demo")
         
