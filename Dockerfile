@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # RUN playwright install
 
 # Flask uygulaması 5000 portunda çalışacak
-EXPOSE 5000
+EXPOSE 5031
 
 # Container çalıştığında app.py'yi başlat
 CMD ["python", "app.py"]
