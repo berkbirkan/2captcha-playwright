@@ -1,5 +1,5 @@
-# Playwright'in resmi imajını baz alıyoruz
-FROM mcr.microsoft.com/playwright/python:v1.32.3-focal
+# Geçerli bir Playwright imajı kullanıyoruz
+FROM mcr.microsoft.com/playwright/python:latest
 
 # Çalışma dizinini oluştur
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 COPY 2captcha-solver /app/2captcha-solver
 COPY app.py .
-# images klasörünü de oluşturmak istersek
+# images klasörünü de oluştur
 RUN mkdir -p /app/images
 
 # Python paketlerini kur

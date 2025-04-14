@@ -7,6 +7,3 @@ services:
       - "5000:5000"
     volumes:
       - ./images:/app/images
-    # İsterseniz, environment değişkenlerini de ekleyebilirsiniz.
-    # environment:
-    #   - FLASK_ENV=development
