@@ -17,6 +17,13 @@ RUN mkdir -p /app/images
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir git+https://github.com/browser-use/browser-use.git@main && \
     pip install --no-cache-dir -r requirements.txt
+
+# Playwright bağımlılıklarını yükle (gerekliyse)
+RUN playwright install-deps
+
+# Playwright tarayıcı dosyalarını indir
+RUN playwright install
+
 # (Opsiyonel) Playwright için ek kurulumlar - genelde resmi imajda gerek kalmaz.
 # RUN playwright install-deps
 # RUN playwright install
