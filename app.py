@@ -72,7 +72,7 @@ def solve_captcha(api_key):
     
     # AI agent için gerekli bileşenler
     controller = Controller()
-    sensitive_data = {'x_email': 'XXX@XXX.com', 'x_password': 'XXX'}
+    sensitive_data = {'x_email': 'neuralabz20251@gmail.com', 'x_password': 'kolokolokolo'}
     
     # llm ve planner_llm için API key’lerinizi güvenli şekilde sağlamalısınız;
     # Aşağıdaki örnekte environment değişkenlerinden ya da placeholder değer kullanılmıştır.
