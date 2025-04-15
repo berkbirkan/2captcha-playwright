@@ -8,6 +8,10 @@ WORKDIR /app
 COPY requirements.txt .
 COPY 2captcha-solver /app/2captcha-solver
 COPY app.py .
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir git+https://github.com/browser-use/browser-use.git@main && \
+    pip install --no-cache-dir -r requirements.txt
 # images klasörünü de oluştur
 RUN mkdir -p /app/images
 
