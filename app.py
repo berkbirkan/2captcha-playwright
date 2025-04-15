@@ -6,15 +6,27 @@ import random
 import string
 import traceback
 import time
+import asyncio
 
 from flask import Flask, request, jsonify, send_from_directory, url_for
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright  # Eski yapıdan kalan, gerekli olursa kullanılabilir
+
+# Browser-use entegrasyonu için gerekli kütüphaneler
+from langchain_openai import ChatOpenAI
+from browser_use import Agent, BrowserConfig, Browser, Controller
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__, static_folder='images')
 
-#Method 1 - For Set 2CAPTCHA API Key
+##############################################
+# 2CAPTCHA UZANTISI İÇİN ORJİNAL YAPI (Method 1) #
+##############################################
+
 def modify_config_js(api_key, extension_path):
-    
+    """
+    2captcha uzantısının config.js dosyasındaki apiKey ayarını günceller.
+    """
     config_file_path = os.path.join(extension_path, 'common', 'config.js')
     base_config = open(config_file_path).read()
     api_key_pattern = re.compile(r'(\bapiKey: )(null|".*?"),')
@@ -22,97 +34,68 @@ def modify_config_js(api_key, extension_path):
     with open(config_file_path, 'w+') as f:
         f.write(updated_config)
 
-#Method 2 - For Set 2CAPTCHA API Key
-def set_using_cdp(api_key, browser):
-    page = browser.new_page()
-    page.goto("chrome://extensions/")
-    extension_elements = page.query_selector_all('extensions-item')
-    if not extension_elements:
-        raise Exception("Herhangi bir extension bulunamadı. Lütfen uzantının yüklendiğinden emin olun.")
-    extension_id = extension_elements[0].get_attribute('id')
-    
-    print(f"Extension ID: {extension_id}")
-    
-    page.evaluate(
-        """() => {
-            const inspectLinks = Array.from(document.querySelectorAll('a'));
-            const serviceWorkerLink = inspectLinks.find(a => a.textContent.includes('service worker'));
-            if (serviceWorkerLink) serviceWorkerLink.click();
-        }"""
-    )
-    page.wait_for_timeout(5000)
-    
-    extension_page = browser.new_page()
-    extension_page.goto(f"chrome-extension://{extension_id}/options/options.html")
-
-    page.wait_for_timeout(5000)
-    
-    extension_page.evaluate(
-        f"""() => {{
-            Config.set({{ apiKey: "{api_key}" }});
-        }}"""
-    )
-
+##################################################
+# AI AGENT İLE 2CAPTCHA YÜKLENMİŞ BROWSER OLUŞTURMA #
+##################################################
 
 def solve_captcha(api_key):
+    """
+    Verilen API key ile öncelikle config.js güncellenir.
+    Daha sonra browser-use paketini kullanarak, 2captcha uzantısını yükleyecek
+    şekilde browser (agent) oluşturulur. Agent, belirlenen görevi (task) çalıştırır ve
+    aksiyon geçmişini (model actions) sonucu olarak döndürür.
+    """
+    # Uzantı dizinini belirle ve config.js güncellemesi yap
     extension_path = os.path.abspath("./2captcha-solver")
-    #Method 1
     modify_config_js(api_key, extension_path)
     
-    temp_user_data = f"/tmp/{uuid.uuid4()}"
+    # BrowserUse için yapılandırma: burada 2captcha uzantısını yüklemek için gerekli
+    # argümanlar ekleniyor. (Not: BrowserConfig yapılandırmasında args parametresi destekleniyorsa)
+    config = BrowserConfig(
+        headless=True,  # Operasyonunuzu headless ya da window modunda çalıştırabilirsiniz.
+        disable_security=True,
+        args=[
+            f"--disable-extensions-except={extension_path}",
+            f"--load-extension={extension_path}",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage"
+        ]
+    )
     
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch_persistent_context(
-            user_data_dir=temp_user_data,
-            headless=False,
-            args=[
-                f"--disable-extensions-except={extension_path}",
-                f"--load-extension={extension_path}",
-                "--headless=new",
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage"
-            ]
-        )
-
-        #Method 2 - For Set 2CAPTCHA API Key
-        #set_using_cdp(api_key, browser)
-
-        time.sleep(5)
-        page = browser.new_page()
-        page.goto("https://www.google.com/recaptcha/api2/demo")
-        
-        # Ekran görüntüsü öncesi
-        before_filename = f"before_{random_string(8)}.png"
-        before_path = os.path.join("images", before_filename)
-        page.wait_for_timeout(5000)
-        
-        page.screenshot(path=before_path)
-        
-        # Örnek olarak bekleme süresi, gerçek işlemde tıklama vs. eklenebilir.
-        page.wait_for_timeout(5000)
-
-        time.sleep(5)
-        
-        # Ekran görüntüsü sonrası
-        after_filename = f"after_{random_string(8)}.png"
-        after_path = os.path.join("images", after_filename)
-        page.screenshot(path=after_path)
-        
-        browser.close()
+    # Browser-use tarayıcı örneğini oluşturuyoruz
+    browser = Browser(config=config)
     
-    return before_filename, after_filename
+    # AI agent için gerekli bileşenler
+    controller = Controller()
+    sensitive_data = {'x_email': 'XXX@XXX.com', 'x_password': 'XXX'}
+    
+    # llm ve planner_llm için API key’lerinizi güvenli şekilde sağlamalısınız;
+    # Aşağıdaki örnekte environment değişkenlerinden ya da placeholder değer kullanılmıştır.
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("LLM_API_KEY") or 'sk-proj-your-llm-key')
+    planner_llm = ChatOpenAI(model='o3-mini', api_key=os.getenv("PLANNER_API_KEY") or 'sk-proj-your-planner-key')
+    
+    # Agent oluşturuluyor; task açıklamasını ihtiyacınıza göre güncelleyin.
+    agent = Agent(
+        browser=browser,
+        task="X.com adresine gir ve yeni bir hesap oluştur. Email olarak x_email adresini gir ve şifre olarak x_password kullan. Eğer captcha çıkarsa Funcaptcha (Arkoselabs) ile çöz. Hesap oluşturma işlemin bittikten sonra @berkbirkan adlı kullanıcının son tweetini bul ve tweeti alıntıla.",
+        llm=llm,
+        planner_llm=planner_llm,
+        planner_interval=1,
+        controller=controller,
+        sensitive_data=sensitive_data
+    )
+    
+    # Agent asenkron çalıştığından, asyncio.run ile çağırıp tamamlanmasını bekliyoruz.
+    history = asyncio.run(agent.run())
+    
+    # Agent’ın gerçekleştirdiği aksiyonların geçmişini string olarak döndürüyoruz.
+    result = history.model_actions()
+    return result
 
-
-def random_string(length=8):
-    chars = string.ascii_lowercase + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
-
-
-@app.route('/images/<path:filename>', methods=['GET'])
-def serve_images(filename):
-    return send_from_directory('images', filename)
-
+#####################################
+# Flask Endpoint ve Yardımcı Fonksiyon#
+#####################################
 
 @app.route('/solve', methods=['GET'])
 def solve_endpoint():
@@ -121,21 +104,23 @@ def solve_endpoint():
         if not api_key:
             return jsonify({"error": "Lütfen api_key parametresini iletin."}), 400
         
-        before_file, after_file = solve_captcha(api_key)
-        
-        before_url = url_for('serve_images', filename=before_file, _external=True)
-        after_url = url_for('serve_images', filename=after_file, _external=True)
+        result = solve_captcha(api_key)
         
         return jsonify({
-            "before_image_url": before_url,
-            "after_image_url": after_url
+            "result": result
         }), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Gerekirse statik dosya (görsel) servisi için endpoint (örn. uzantı logları, screenshot vs.)
+@app.route('/images/<path:filename>', methods=['GET'])
+def serve_images(filename):
+    return send_from_directory('images', filename)
 
-# Ana işlemde, artık komut satırı argümanı yerine direkt Flask sunucusunu başlatıyoruz.
+#####################################
+# Uygulama Başlatma                   #
+#####################################
+
 if __name__ == '__main__':
-    # Flask uygulamasını 0.0.0.0:5000 üzerinde başlatıyoruz.
     app.run(host='0.0.0.0', port=5031, debug=True)
