@@ -1,5 +1,5 @@
 Flask
 playwright
-browser_use
+browser-use
 langchain_openai
 python-dotenv
