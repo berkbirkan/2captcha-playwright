@@ -1,5 +1,5 @@
 # Geçerli bir Playwright imajı kullanıyoruz
-FROM mcr.microsoft.com/playwright/python:v1.51.0-jammy
+FROM python:3.11
 
 # Çalışma dizinini oluştur
 WORKDIR /app
