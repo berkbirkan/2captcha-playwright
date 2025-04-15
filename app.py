@@ -72,7 +72,7 @@ def solve_captcha(api_key):
     
     # AI agent için gerekli bileşenler
     controller = Controller()
-    sensitive_data = {'x_email': 'neuralabz20251@gmail.com', 'x_password': 'kolokolokolo'}
+    sensitive_data = {'x_email': 'neuralabz20251asdsadasd@gmail.com', 'x_password': 'kolokolokolo'}
     
     # llm ve planner_llm için API key’lerinizi güvenli şekilde sağlamalısınız;
     # Aşağıdaki örnekte environment değişkenlerinden ya da placeholder değer kullanılmıştır.
@@ -85,7 +85,7 @@ def solve_captcha(api_key):
     # Agent oluşturuluyor; task açıklamasını ihtiyacınıza göre güncelleyin.
     agent = Agent(
         browser=browser,
-        task="X.com adresine gir ve yeni bir hesap oluştur. Email olarak x_email adresini gir ve şifre olarak x_password kullan. Eğer captcha çıkarsa Funcaptcha (Arkoselabs) ile çöz. Hesap oluşturma işlemin bittikten sonra @berkbirkan adlı kullanıcının son tweetini bul ve tweeti alıntıla.",
+        task="X.com adresine gir ve yeni bir hesap oluştur. Email olarak x_email adresini gir ve şifre olarak x_password kullan. Eğer sayfada captcha çıkarsa 2captcha eklentisinin çözmesini beklemeden herhangi bir butona basma. Eğer eklenti otomatik olarak çözmeye başlamadıysa kendin 2captcha ile çöz butonuna basarak çözmesini bekle.  Hesap oluşturma işlemin bittikten sonra @berkbirkan adlı kullanıcının son tweetini bul ve tweeti alıntıla.",
         llm=llm,
         planner_llm=planner_llm,
         planner_interval=1,
