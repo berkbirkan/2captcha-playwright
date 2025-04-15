@@ -85,7 +85,7 @@ def solve_captcha(api_key):
     # Agent oluşturuluyor; task açıklamasını ihtiyacınıza göre güncelleyin.
     agent = Agent(
         browser=browser,
-        task="X.com adresine gir ve yeni bir hesap oluştur. Email olarak x_email adresini gir ve şifre olarak x_password kullan. Eğer sayfada captcha çıkarsa 2captcha eklentisinin çözmesini beklemeden herhangi bir butona basma. Eğer eklenti otomatik olarak çözmeye başlamadıysa kendin 2captcha ile çöz butonuna basarak çözmesini bekle.  Hesap oluşturma işlemin bittikten sonra @berkbirkan adlı kullanıcının son tweetini bul ve tweeti alıntıla.",
+        task="https://www.google.com/recaptcha/api2/demo adresine gir ve formu doldur. Captchanın çözülmesini bekle. Captcha çözüldükten sonra submit butonuna tıkla. ",
         llm=llm,
         planner_llm=planner_llm,
         planner_interval=1,
