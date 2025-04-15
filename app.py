@@ -19,6 +19,7 @@ load_dotenv()
 
 os.environ.setdefault("LLM_API_KEY", "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")
 os.environ.setdefault("PLANNER_API_KEY", "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")
+os.environ.setdefault("OPENAI_API_KEY", "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")
 
 app = Flask(__name__, static_folder='images')
 
