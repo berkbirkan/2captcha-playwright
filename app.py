@@ -72,8 +72,11 @@ def solve_captcha(api_key):
     
     # llm ve planner_llm için API key’lerinizi güvenli şekilde sağlamalısınız;
     # Aşağıdaki örnekte environment değişkenlerinden ya da placeholder değer kullanılmıştır.
-    llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("LLM_API_KEY") or 'sk-proj-your-llm-key')
-    planner_llm = ChatOpenAI(model='o3-mini', api_key=os.getenv("PLANNER_API_KEY") or 'sk-proj-your-planner-key')
+
+    llm = ChatOpenAI(model="gpt-4o-mini",api_key='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')
+    planner_llm = ChatOpenAI(model='o3-mini',api_key='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')
+
+
     
     # Agent oluşturuluyor; task açıklamasını ihtiyacınıza göre güncelleyin.
     agent = Agent(
