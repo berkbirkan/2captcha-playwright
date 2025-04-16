@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "5031:5031"
+      - "8501:8501"
     volumes:
       - ./images:/app/images
     environment:

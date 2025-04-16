@@ -3,3 +3,4 @@ playwright
 git+https://github.com/browser-use/browser-use.git@main
 langchain_openai==0.3.11
 python-dotenv
+streamlit
