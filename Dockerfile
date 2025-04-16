@@ -22,7 +22,7 @@ RUN playwright install-deps
 RUN playwright install
 
 # Hem Flask hem Streamlit portlarını expose ediyoruz
-EXPOSE 5031 8501
+EXPOSE 5031 8502
 
 # Container çalıştığında Streamlit arayüzünü çalıştırıyoruz.
-CMD ["streamlit", "run", "app.py", "--server.port", "8501"]
+CMD ["streamlit", "run", "app.py", "--server.port", "8502"]
