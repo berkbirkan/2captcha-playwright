@@ -202,20 +202,30 @@ try:
                     sys.stdout = old_stdout
 
             # Arka plan thread’i ile işlemi başlatıyoruz
+            # Arka plan thread’i ile işlemi başlatıyoruz
             t = threading.Thread(target=run_agent_task, args=(api_key_input, task_input))
             t.start()
+
+            # Log güncellemesi için placeholder oluşturuyoruz
+            log_placeholder = st.empty()
 
             # Thread çalışırken log akışını belirli aralıklarla güncelliyoruz
             while t.is_alive():
                 while not log_queue.empty():
                     log_text += log_queue.get()
-                log_container.text_area("Loglar", log_text, height=300)
+                # Önce mevcut widget’ı temizleyip, ardından benzersiz key ile yeniden ekliyoruz.
+                log_placeholder.empty()
+                log_placeholder = st.empty()
+                log_placeholder.text_area("Loglar", log_text, height=300, key="log_area_"+str(int(time.time()*1000)))
                 time.sleep(1)
 
             # İşlem bittikten sonra kalan logları da güncelliyoruz
             while not log_queue.empty():
                 log_text += log_queue.get()
-            log_container.text_area("Loglar", log_text, height=300)
+            log_placeholder.empty()
+            log_placeholder = st.empty()
+            log_placeholder.text_area("Loglar", log_text, height=300, key="final_log_area")
+
 
             # İşlem sonunda agent_history.gif dosyası varsa gösteriyoruz.
             if os.path.exists("agent_history.gif"):
