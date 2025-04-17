@@ -82,8 +82,8 @@ def solve_captcha(api_key, task=None):
     sensitive_data = {'x_email': 'neuralabz20251asdsadasd@gmail.com', 'x_password': 'kolokolokolo'}
     
     # API key’ler environment ya da doğrudan parametrelerden sağlanmalıdır
-    llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.environ.get("LLM_API_KEY"))
-    planner_llm = ChatOpenAI(model='o3-mini', api_key=os.environ.get("PLANNER_API_KEY"))
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key='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')
+    planner_llm = ChatOpenAI(model='o3-mini', api_key='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')
 
     # Agent oluşturuluyor, burada task parametresi dinamik olarak kullanılıyor.
     agent = Agent(
