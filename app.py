@@ -1,86 +1,90 @@
 import os
 import re
-import sys
-import traceback
 import asyncio
-import io
+import threading
+import traceback
 
 from flask import Flask, request, jsonify, send_from_directory
-from playwright.sync_api import sync_playwright  # Eski yapıdan kalan, gerekli olursa kullanılabilir
-from langchain_openai import ChatOpenAI
 from browser_use import Agent, BrowserConfig, Browser, Controller
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+import streamlit as st
 
-import streamlit as st  # <-- Streamlit UI
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Load env
+# ───────────────────────────────────────────────────────────────────────────────
+# Load environment variables
 load_dotenv()
-os.environ.setdefault("LLM_API_KEY",     os.getenv("LLM_API_KEY", ""))
-os.environ.setdefault("PLANNER_API_KEY", os.getenv("PLANNER_API_KEY", ""))
-os.environ.setdefault("OPENAI_API_KEY",  os.getenv("OPENAI_API_KEY", ""))
 
-app = Flask(__name__, static_folder='images')
+# ───────────────────────────────────────────────────────────────────────────────
+# Flask app for your existing `/solve` endpoint
+flask_app = Flask(__name__, static_folder='images')
 
-# ──────────────────────────────────────────────────────────────────────────────
-def modify_config_js(api_key, extension_path):
+def modify_config_js(api_key: str, extension_path: str):
+    """
+    Update the 2captcha extension's common/config.js with the given API key.
+    """
     config_file_path = os.path.join(extension_path, 'common', 'config.js')
     base = open(config_file_path, 'r', encoding='utf-8').read()
-    pat = re.compile(r'(\bapiKey: )(null|".*?"),')
-    updated = pat.sub(rf'\1"{api_key}",', base)
-    with open(config_file_path, 'w', encoding='utf-8') as f:
+    pattern = re.compile(r'(\bapiKey: )(null|".*?"),')
+    updated = pattern.sub(rf'\1"{api_key}",', base)
+    with open(config_file_path, 'w+', encoding='utf-8') as f:
         f.write(updated)
 
 def solve_captcha(api_key: str, task: str):
-    # 1) update extension config
-    ext = os.path.abspath("./2captcha-solver")
-    modify_config_js(api_key, ext)
+    """
+    1) Patch the 2captcha extension config.
+    2) Launch a headless BrowserUse browser with that extension.
+    3) Spin up an Agent with your `task` string.
+    4) Run, then save an agent_history.gif if supported.
+    5) Return model_actions() as a list.
+    """
+    extension_path = os.path.abspath("./2captcha-solver")
+    modify_config_js(api_key, extension_path)
 
-    # 2) launch browser-use browser with the extension
-    cfg = BrowserConfig(
+    config = BrowserConfig(
         headless=True,
         disable_security=True,
         args=[
-            f"--disable-extensions-except={ext}",
-            f"--load-extension={ext}",
+            f"--disable-extensions-except={extension_path}",
+            f"--load-extension={extension_path}",
             "--no-sandbox",
             "--disable-setuid-sandbox",
             "--disable-dev-shm-usage"
         ]
     )
-    browser = Browser(config=cfg)
+    browser = Browser(config=config)
     controller = Controller()
-    sensitive = {
-        'x_email':    'neuralabz20251asdsadasd@gmail.com',
-        'x_password': 'kolokolokolo',
-    }
 
-    llm         = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("LLM_API_KEY"))
-    planner_llm = ChatOpenAI(model="o3-mini",   api_key=os.getenv("PLANNER_API_KEY"))
+    llm       = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+    planner   = ChatOpenAI(model="o3-mini",    api_key=os.getenv("PLANNER_API_KEY"))
 
     agent = Agent(
         browser=browser,
         task=task,
         llm=llm,
-        planner_llm=planner_llm,
+        planner_llm=planner,
         planner_interval=1,
-        controller=controller,
-        sensitive_data=sensitive
+        controller=controller
     )
 
-    # run and return the action history
     history = asyncio.run(agent.run())
+
+    # if the history object supports saving a GIF:
+    if hasattr(history, "save_gif"):
+        history.save_gif("agent_history.gif")
+
     return history.model_actions()
 
-# ──────────────────────────────────────────────────────────────────────────────
-@app.route('/solve', methods=['GET'])
+@flask_app.route('/solve', methods=['POST'])
 def solve_endpoint():
+    """
+    Unchanged API endpoint – now expecting JSON POST with {"api_key":..., "task":...}
+    """
     try:
-        api_key = request.args.get('api_key')
-        task    = request.args.get('task',
-               "https://www.google.com/recaptcha/api2/demo adresine gir ve formu doldur...")
-        if not api_key:
-            return jsonify({"error":"Lütfen api_key parametresini iletin."}), 400
+        data = request.get_json()
+        api_key = data.get('api_key')
+        task    = data.get('task')
+        if not api_key or not task:
+            return jsonify({"error": "Both 'api_key' and 'task' are required"}), 400
 
         result = solve_captcha(api_key, task)
         return jsonify({"result": result}), 200
@@ -89,42 +93,45 @@ def solve_endpoint():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/images/<path:filename>', methods=['GET'])
+@flask_app.route('/images/<path:filename>', methods=['GET'])
 def serve_images(filename):
     return send_from_directory('images', filename)
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Streamlit UI (always runs when you invoke `streamlit run app.py`)
-st.set_page_config(page_title="2Captcha Solver", layout="wide")
-st.title("🧩 2Captcha Solver")
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=5032, debug=True)
 
-api_key = st.text_input("🔑 2Captcha API Key", "")
-task    = st.text_area("📝 Task (URL or instructions)", "")
+# launch Flask in a background thread
+threading.Thread(target=run_flask, daemon=True).start()
 
-if st.button("▶️ Start"):
+# ───────────────────────────────────────────────────────────────────────────────
+# Streamlit UI at “/” (root) on Streamlit’s port
+st.set_page_config(page_title="2CAPTCHA Solver", layout="wide")
+st.title("🧩 2CAPTCHA Solver")
+
+st.markdown("""
+Enter your **2captcha** API key and a free‑form **task** (for example:  
+> “Go to https://www.google.com/recaptcha/api2/demo, fill in the form, wait for the captcha to solve, then click submit.”)
+""")
+
+api_key = st.text_input("2CAPTCHA API Key", key="api_key")
+task    = st.text_area("Agent Task", key="task")
+
+if st.button("🚀 Start Agent"):
+    # a spot for live‑updating logs
     log_box = st.empty()
-    buf = io.StringIO()
-    class TeeLogger:
-        def write(self, msg):
-            buf.write(msg)
-            log_box.text(buf.getvalue())
-        def flush(self): pass
-
-    # hijack stdout/stderr so we see live logs
-    old_out, old_err = sys.stdout, sys.stderr
-    sys.stdout = sys.stderr = TeeLogger()
+    gif_box = st.empty()
 
     try:
+        log_box.text("Initializing…")
         result = solve_captcha(api_key, task)
-    finally:
-        sys.stdout, sys.stderr = old_out, old_err
 
-    log_box.text(buf.getvalue())
-    # show the gif (assuming it lands in images/)
-    st.image("images/agent_history.gif", caption="Agent History GIF")
-    st.write("**Result:**", result)
+        log_box.text("✅ Agent completed!")
+        st.subheader("Agent Actions")
+        st.write(result)
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Only run Flask when NOT under Streamlit’s own process
-if __name__ == "__main__" and "STREAMLIT_SERVER_PORT" not in os.environ:
-    app.run(host='0.0.0.0', port=5031, debug=True)
+        if os.path.exists("agent_history.gif"):
+            st.subheader("Agent History GIF")
+            gif_box.image("agent_history.gif", use_column_width=True)
+
+    except Exception as e:
+        st.error(f"❌ Error running agent: {e}")
