@@ -54,8 +54,8 @@ def solve_captcha(api_key: str, task: str):
     browser = Browser(config=config)
     controller = Controller()
 
-    llm       = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-    planner   = ChatOpenAI(model="o3-mini",    api_key=os.getenv("PLANNER_API_KEY"))
+    llm       = ChatOpenAI(model="gpt-4o-mini", api_key='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')
+    planner   = ChatOpenAI(model="o3-mini",    api_key='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')
 
     agent = Agent(
         browser=browser,
