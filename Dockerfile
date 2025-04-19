@@ -1,28 +1,27 @@
-# Geçerli bir Python 3.11 imajı kullanıyoruz
 FROM python:3.11
 
-# Çalışma dizinini oluştur
 WORKDIR /app
 
-# Gerekli dosyaları kopyala
 COPY requirements.txt .
 COPY 2captcha-solver /app/2captcha-solver
 COPY app.py .
 
-# images klasörünü de oluştur
 RUN mkdir -p /app/images
 
-# Python paketlerini kur
+# install Python deps
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir git+https://github.com/browser-use/browser-use.git@main && \
     pip install --no-cache-dir -r requirements.txt
 
-# Playwright bağımlılıklarını yükle
+# Playwright needs these
 RUN playwright install-deps
 RUN playwright install
 
-# Hem Flask hem Streamlit portlarını expose ediyoruz
-EXPOSE 5031 8502
+# expose both Flask & Streamlit ports
+EXPOSE 5031 8501
 
-# Container çalıştığında Streamlit arayüzünü çalıştırıyoruz.
-CMD ["streamlit", "run", "app.py", "--server.port", "8502"]
+# start both servers:
+#  - Streamlit on 8501 
+#  - Flask on 5031
+CMD ["sh","-c", \
+  "streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --server.enableCORS=false & " \
+  "python app.py"]
