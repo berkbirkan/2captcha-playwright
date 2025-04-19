@@ -20,11 +20,11 @@ RUN playwright install-deps && \
     playwright install
 
 # Expose Streamlit UI port + Flask API port
-EXPOSE 8501
+EXPOSE 8502
 EXPOSE 5032
 
 # Launch the Streamlit UI (which in turn spawns Flask on 5032)
 ENTRYPOINT ["streamlit", "run", "app.py", \
-            "--server.port=8501", \
+            "--server.port=8502", \
             "--server.address=0.0.0.0", \
             "--server.enableCORS=false"]
