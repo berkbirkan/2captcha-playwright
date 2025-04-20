@@ -29,7 +29,7 @@ def modify_config_js(api_key: str, extension_path: str):
     with open(config_file_path, 'w+', encoding='utf-8') as f:
         f.write(updated)
 
-def solve_captcha(api_key: str, task: str):
+def solve_captcha(api_key: str, task: str, openai_api_key: str):
     """
     1) Patch the 2captcha extension config.
     2) Launch a headless BrowserUse browser with that extension.
@@ -54,8 +54,8 @@ def solve_captcha(api_key: str, task: str):
     browser = Browser(config=config)
     controller = Controller()
 
-    llm       = ChatOpenAI(model="gpt-4o-mini", api_key='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')
-    planner   = ChatOpenAI(model="o3-mini",    api_key='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')
+    llm       = ChatOpenAI(model="gpt-4o-mini", api_key=openai_api_key)
+    planner   = ChatOpenAI(model="o3-mini",    api_key=openai_api_key)
 
     agent = Agent(
         browser=browser,
@@ -82,11 +82,12 @@ def solve_endpoint():
     try:
         data = request.get_json()
         api_key = data.get('api_key')
+        openai_api_key  = data.get('openai_api_key')
         task    = data.get('task')
-        if not api_key or not task:
+        if not api_key or not task or not openai_api_key:
             return jsonify({"error": "Both 'api_key' and 'task' are required"}), 400
 
-        result = solve_captcha(api_key, task)
+        result = solve_captcha(api_key, task,openai_api_key)
         return jsonify({"result": result}), 200
 
     except Exception as e:
@@ -116,6 +117,7 @@ Enter your **2captcha** API key and a free‑form **task** (for example:
 
 api_key = st.text_input("2CAPTCHA API Key", key="api_key")
 task    = st.text_area("Agent Task", key="task")
+openai_api_key = st.text_input("OpenAI API Key",    key="openai_api_key")
 
 if st.button("🚀 Start Agent"):
     # a spot for live‑updating logs
@@ -124,7 +126,7 @@ if st.button("🚀 Start Agent"):
 
     try:
         log_box.text("Initializing…")
-        result = solve_captcha(api_key, task)
+        result = solve_captcha(api_key, task,openai_api_key)
 
         log_box.text("✅ Agent completed!")
         st.subheader("Agent Actions")
