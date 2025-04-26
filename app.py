@@ -132,9 +132,8 @@ if st.button("🚀 Start Agent"):
         st.subheader("Agent Actions")
         st.write(result)
 
-        if os.path.exists("agent_history.gif"):
-            st.subheader("Agent History GIF")
-            gif_box.image("agent_history.gif", use_column_width=True)
+        st.subheader("Agent History GIF")
+        gif_box.image("agent_history.gif", use_column_width=True)
 
     except Exception as e:
         st.error(f"❌ Error running agent: {e}")
