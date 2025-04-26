@@ -26,5 +26,4 @@ EXPOSE 5033
 # Launch the Streamlit UI (which in turn spawns Flask on 5032)
 ENTRYPOINT ["streamlit", "run", "app.py", \
             "--server.port=8502", \
-            "--server.address=0.0.0.0", \
-            "--server.enableCORS=false"]
+            "--server.address=0.0.0.0"]
