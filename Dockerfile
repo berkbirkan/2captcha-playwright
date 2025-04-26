@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Install Playwright & browsers
 RUN playwright install-deps && \
-    playwright install
+    playwright install chrome
 
 # Expose Streamlit UI port + Flask API port
 EXPOSE 8502
