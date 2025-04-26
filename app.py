@@ -3,7 +3,6 @@ import re
 import asyncio
 import threading
 import traceback
-import builtins
 
 from flask import Flask, request, jsonify, send_from_directory
 from browser_use import Agent, BrowserConfig, Browser, Controller
@@ -16,7 +15,7 @@ import streamlit as st
 load_dotenv()
 
 # ───────────────────────────────────────────────────────────────────────────────
-# Flask app for your existing `/solve` endpoint
+# Flask app for your existing /solve endpoint
 flask_app = Flask(__name__, static_folder='images')
 
 def modify_config_js(api_key: str, extension_path: str):
@@ -30,14 +29,13 @@ def modify_config_js(api_key: str, extension_path: str):
     with open(config_file_path, 'w+', encoding='utf-8') as f:
         f.write(updated)
 
-
-def solve_captcha(api_key: str, task: str, openai_api_key: str, log_callback=None):
+def solve_captcha(api_key: str, task: str, openai_api_key: str):
     """
     1) Patch the 2captcha extension config.
     2) Launch a headless BrowserUse browser with that extension.
-    3) Spin up an Agent with your `task` string.
+    3) Spin up an Agent with your task string.
     4) Run, then save an agent_history.gif if supported.
-    5) Stream print() calls to Streamlit via log_callback.
+    5) Return model_actions() as a list.
     """
     extension_path = os.path.abspath("./2captcha-solver")
     modify_config_js(api_key, extension_path)
@@ -56,8 +54,8 @@ def solve_captcha(api_key: str, task: str, openai_api_key: str, log_callback=Non
     browser = Browser(config=config)
     controller = Controller()
 
-    llm     = ChatOpenAI(model="gpt-4o-mini", api_key=openai_api_key)
-    planner = ChatOpenAI(model="o3-mini",    api_key=openai_api_key)
+    llm       = ChatOpenAI(model="gpt-4o-mini", api_key=openai_api_key)
+    planner   = ChatOpenAI(model="o3-mini",    api_key=openai_api_key)
 
     agent = Agent(
         browser=browser,
@@ -68,28 +66,13 @@ def solve_captcha(api_key: str, task: str, openai_api_key: str, log_callback=Non
         controller=controller
     )
 
-    # Override built-in print to stream logs into Streamlit
-    orig_print = builtins.print
-    def _print(*args, **kwargs):
-        msg = " ".join(map(str, args))
-        if log_callback:
-            log_callback(msg)
-        else:
-            orig_print(msg)
-    builtins.print = _print
+    history = asyncio.run(agent.run())
 
-    try:
-        history = asyncio.run(agent.run())
-    finally:
-        # Restore original print
-        builtins.print = orig_print
-
-    # Save GIF if available
+    # if the history object supports saving a GIF:
     if hasattr(history, "save_gif"):
         history.save_gif("agent_history.gif")
 
     return history.model_actions()
-
 
 @flask_app.route('/solve', methods=['POST'])
 def solve_endpoint():
@@ -104,18 +87,16 @@ def solve_endpoint():
         if not api_key or not task or not openai_api_key:
             return jsonify({"error": "Both 'api_key' and 'task' are required"}), 400
 
-        result = solve_captcha(api_key, task, openai_api_key)
+        result = solve_captcha(api_key, task,openai_api_key)
         return jsonify({"result": result}), 200
 
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-
 @flask_app.route('/images/<path:filename>', methods=['GET'])
 def serve_images(filename):
     return send_from_directory('images', filename)
-
 
 def run_flask():
     # Disable debugger and reloader when running in a background thread
@@ -139,20 +120,18 @@ task    = st.text_area("Agent Task", key="task")
 openai_api_key = st.text_input("OpenAI API Key",    key="openai_api_key")
 
 if st.button("🚀 Start Agent"):
-    # placeholders for live‑updating logs and GIF
+    # a spot for live‑updating logs
     log_box = st.empty()
     gif_box = st.empty()
 
     try:
         log_box.text("Initializing…")
-        # Stream logs during agent run
-        result = solve_captcha(api_key, task, openai_api_key, log_callback=log_box.text)
+        result = solve_captcha(api_key, task,openai_api_key)
 
         log_box.text("✅ Agent completed!")
         st.subheader("Agent Actions")
         st.write(result)
 
-        # Show GIF under actions if available
         if os.path.exists("agent_history.gif"):
             st.subheader("Agent History GIF")
             gif_box.image("agent_history.gif", use_column_width=True)
