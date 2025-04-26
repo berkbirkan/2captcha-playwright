@@ -100,7 +100,7 @@ def serve_images(filename):
 
 def run_flask():
     # Disable debugger and reloader when running in a background thread
-    flask_app.run(host='0.0.0.0', port=5032, debug=False, use_reloader=False, threaded=True)
+    flask_app.run(host='0.0.0.0', port=5033, debug=False, use_reloader=False, threaded=True)
 
 # launch Flask in a background thread
 threading.Thread(target=run_flask, daemon=True).start()
