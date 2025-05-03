@@ -15,10 +15,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir git+https://github.com/browser-use/browser-use.git@main && \
     pip install --no-cache-dir -r requirements.txt
 
-RUN playwright-install
 # Install Playwright & browsers
-RUN playwright install-deps && \
-    playwright install chrome
+RUN playwright install-deps
+RUN playwright install chromium
 
 # Expose Streamlit UI port + Flask API port
 EXPOSE 8502
